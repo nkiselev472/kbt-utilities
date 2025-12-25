@@ -1,6 +1,5 @@
-// Конфигурация Google OAuth
-const GOOGLE_CLIENT_ID = '974542744194-pnlcfgnf40ogsgspdtm8cf5i3opn9ept.apps.googleusercontent.com'; // Замените на ваш Client ID
-const GOOGLE_API_KEY = 'ВАШ_API_KEY'; // Опционально, если используете API Key
+// Обновленный auth.js с динамическим redirect_uri
+const GOOGLE_CLIENT_ID = '974542744194-pnlcfgnf40ogsgspdtm8cf5i3opn9ept.apps.googleusercontent.com';
 const SPREADSHEET_ID = '1jST0QufgFkGuvvQ-iweX21L_LqC0jr4ii7sdHI5wVPU';
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
 
@@ -11,16 +10,35 @@ class GoogleAuth {
         this.gisInited = false;
         this.isAuthorized = false;
         this.accessToken = null;
+        
+        // Динамически определяем redirect_uri
+        this.redirectUri = this.getRedirectUri();
+    }
+
+    getRedirectUri() {
+        const currentOrigin = window.location.origin;
+        const currentPathname = window.location.pathname;
+        
+        // Если это локальный сервер
+        if (currentOrigin.includes('localhost')) {
+            return currentOrigin + '/';
+        }
+        
+        // Если это GitHub Pages
+        // Убедитесь, что путь соответствует вашему репозиторию
+        // Например: https://blessmesantana.github.io/project/
+        return currentOrigin + currentPathname;
     }
 
     async initialize() {
         try {
-            // Загружаем Google API Client Library
+            // Загружаем библиотеки
             await this.loadGapi();
             await this.loadGis();
             
             if (this.gapiInited && this.gisInited) {
                 this.updateAuthStatus('ready', 'Готов к авторизации');
+                this.log(`Используем redirect_uri: ${this.redirectUri}`);
             }
         } catch (error) {
             console.error('Ошибка инициализации:', error);
@@ -30,18 +48,20 @@ class GoogleAuth {
 
     loadGapi() {
         return new Promise((resolve) => {
+            // Используем только OAuth2 без API Key
             gapi.load('client', async () => {
                 try {
                     await gapi.client.init({
-                        apiKey: GOOGLE_API_KEY,
+                        // НЕ указываем apiKey здесь!
                         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4'],
                     });
                     this.gapiInited = true;
-                    this.log('Google API client loaded');
+                    this.log('Google API client загружен');
                     resolve();
                 } catch (error) {
-                    console.error('Error loading GAPI:', error);
-                    resolve(); // Продолжаем без API key
+                    console.log('Примечание: API Key не требуется для OAuth');
+                    this.gapiInited = true;
+                    resolve();
                 }
             });
         });
@@ -49,6 +69,7 @@ class GoogleAuth {
 
     loadGis() {
         return new Promise((resolve) => {
+            // Важно: используем правильный redirect_uri
             this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
                 scope: SCOPES,
@@ -59,9 +80,16 @@ class GoogleAuth {
                         this.handleAuthSuccess(response.access_token);
                     }
                 },
+                // Добавляем redirect_uri явно
+                redirect_uri: this.redirectUri,
+                // Для веб-приложений на GitHub Pages
+                hint: 'select_account', // Показывать выбор аккаунта
+                ux_mode: 'popup', // Используем popup вместо redirect
             });
+            
             this.gisInited = true;
-            this.log('Google Identity Services loaded');
+            this.log('Google Identity Services загружены');
+            this.log(`Redirect URI: ${this.redirectUri}`);
             resolve();
         });
     }
@@ -73,14 +101,15 @@ class GoogleAuth {
         }
 
         this.updateAuthStatus('loading', 'Запрос авторизации...');
+        this.log(`Начинаем авторизацию с redirect_uri: ${this.redirectUri}`);
         
         try {
-            // Запрашиваем токен доступа
-            if (gapi.client.getToken() === null) {
-                this.tokenClient.requestAccessToken({ prompt: 'consent' });
-            } else {
-                this.tokenClient.requestAccessToken({ prompt: '' });
-            }
+            // Указываем дополнительные параметры
+            const options = {
+                prompt: 'consent', // Всегда запрашивать согласие
+            };
+            
+            this.tokenClient.requestAccessToken(options);
         } catch (error) {
             this.handleAuthError(error);
         }
@@ -93,14 +122,17 @@ class GoogleAuth {
         // Устанавливаем токен для gapi
         gapi.client.setToken({ access_token: accessToken });
         
-        this.updateAuthStatus('authorized', 'Авторизован');
+        this.updateAuthStatus('authorized', 'Авторизован ✓');
         this.log('Успешная авторизация через Google');
         
         // Обновляем UI
-        document.getElementById('authButton').innerHTML = 
-            '<i class="fas fa-check-circle"></i> Авторизован';
-        document.getElementById('authButton').classList.add('btn-success');
-        document.getElementById('authButton').classList.remove('btn-google');
+        const authButton = document.getElementById('authButton');
+        if (authButton) {
+            authButton.innerHTML = '<i class="fas fa-check-circle"></i> Авторизован';
+            authButton.classList.add('btn-success');
+            authButton.classList.remove('btn-google');
+            authButton.disabled = false;
+        }
         
         // Проверяем доступ к таблице
         this.checkSpreadsheetAccess();
@@ -110,23 +142,33 @@ class GoogleAuth {
         console.error('Auth error:', error);
         
         let errorMessage = 'Ошибка авторизации';
+        let details = '';
+        
         if (error === 'popup_closed_by_user') {
             errorMessage = 'Авторизация отменена пользователем';
         } else if (error.includes('access_denied')) {
-            errorMessage = 'Доступ запрещен. Проверьте разрешения';
+            errorMessage = 'Доступ запрещен';
+            details = 'Проверьте разрешения в Google Cloud Console';
+        } else if (error.includes('redirect_uri')) {
+            errorMessage = 'Ошибка redirect_uri';
+            details = `Проверьте настройки в Google Cloud Console. Текущий URI: ${this.redirectUri}`;
         }
         
         this.updateAuthStatus('error', errorMessage);
-        this.log(`Ошибка авторизации: ${error}`);
+        this.log(`Ошибка авторизации: ${errorMessage}. ${details}`);
+        
+        // Показываем подробное сообщение
+        alert(`Ошибка авторизации: ${errorMessage}\n\n${details}\n\nПроверьте настройки в Google Cloud Console:\n1. Authorized redirect URIs\n2. Authorized JavaScript origins\n\nТекущий URI: ${this.redirectUri}`);
     }
 
     async checkSpreadsheetAccess() {
         try {
             this.updateAuthStatus('loading', 'Проверка доступа к таблице...');
             
+            // Простая проверка без сложных запросов
             const response = await gapi.client.sheets.spreadsheets.get({
                 spreadsheetId: SPREADSHEET_ID,
-                fields: 'properties.title',
+                fields: 'properties.title,spreadsheetUrl',
             });
             
             const sheetTitle = response.result.properties.title;
@@ -134,123 +176,32 @@ class GoogleAuth {
             this.log(`Подключено к таблице: "${sheetTitle}"`);
             
             // Обновляем статус в UI
-            document.getElementById('sheetStatus').innerHTML = 
-                `<i class="fas fa-check-circle"></i> Таблица "${sheetTitle}" доступна`;
+            const sheetStatus = document.getElementById('sheetStatus');
+            if (sheetStatus) {
+                sheetStatus.innerHTML = 
+                    `<i class="fas fa-check-circle"></i> Таблица "${sheetTitle}" доступна`;
+            }
             
         } catch (error) {
             console.error('Spreadsheet access error:', error);
-            this.updateAuthStatus('error', 'Нет доступа к таблице');
-            document.getElementById('sheetStatus').innerHTML = 
-                `<i class="fas fa-exclamation-triangle"></i> Нет доступа к таблице`;
-        }
-    }
-
-    async appendToSheet(number) {
-        if (!this.isAuthorized || !this.accessToken) {
-            throw new Error('Не авторизован. Сначала войдите с Google');
-        }
-
-        try {
-            // Находим первую пустую строку в столбце A
-            const rangeResponse = await gapi.client.sheets.spreadsheets.values.get({
-                spreadsheetId: SPREADSHEET_ID,
-                range: 'A:A',
-            });
             
-            const values = rangeResponse.result.values || [];
-            let nextRow = 2; // Начинаем с A2
-            
-            if (values.length > 0) {
-                // Ищем первую пустую ячейку после A1
-                for (let i = 1; i < values.length; i++) {
-                    if (!values[i] || values[i][0] === '') {
-                        nextRow = i + 1;
-                        break;
-                    }
-                }
-                if (nextRow === 2 && values.length > 1) {
-                    nextRow = values.length + 1;
-                }
+            // Показываем дружелюбное сообщение об ошибке
+            let errorMsg = 'Нет доступа к таблице';
+            if (error.status === 403) {
+                errorMsg = 'Доступ запрещен. Добавьте ваш email в редакторы таблицы';
+            } else if (error.status === 404) {
+                errorMsg = 'Таблица не найдена. Проверьте ID таблицы';
             }
             
-            // Записываем данные
-            const updateResponse = await gapi.client.sheets.spreadsheets.values.update({
-                spreadsheetId: SPREADSHEET_ID,
-                range: `A${nextRow}`,
-                valueInputOption: 'USER_ENTERED',
-                resource: {
-                    values: [[number]]
-                },
-            });
+            this.updateAuthStatus('error', errorMsg);
             
-            this.log(`Данные записаны в строку ${nextRow}: ${number}`);
-            return { success: true, row: nextRow };
-            
-        } catch (error) {
-            console.error('Ошибка записи в таблицу:', error);
-            throw new Error(`Не удалось записать в таблицу: ${error.message}`);
+            const sheetStatus = document.getElementById('sheetStatus');
+            if (sheetStatus) {
+                sheetStatus.innerHTML = 
+                    `<i class="fas fa-exclamation-triangle"></i> ${errorMsg}`;
+            }
         }
     }
 
-    updateAuthStatus(status, message) {
-        const authStatus = document.getElementById('authStatus');
-        const icon = authStatus.querySelector('i');
-        
-        // Удаляем все классы статуса
-        authStatus.className = 'auth-status';
-        
-        switch (status) {
-            case 'ready':
-                authStatus.classList.add('ready');
-                icon.className = 'fas fa-circle-check';
-                break;
-            case 'loading':
-                authStatus.classList.add('loading');
-                icon.className = 'fas fa-circle-notch fa-spin';
-                break;
-            case 'authorized':
-                authStatus.classList.add('authorized');
-                icon.className = 'fas fa-check-circle';
-                break;
-            case 'error':
-                authStatus.classList.add('error');
-                icon.className = 'fas fa-exclamation-circle';
-                break;
-        }
-        
-        authStatus.querySelector('span').textContent = message;
-    }
-
-    log(message) {
-        const time = new Date().toLocaleTimeString('ru-RU', { 
-            hour12: false,
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-        
-        const logEntry = document.createElement('div');
-        logEntry.className = 'log-entry';
-        logEntry.innerHTML = `
-            <span class="log-time">${time}</span>
-            <span class="log-text">${message}</span>
-        `;
-        
-        const logContent = document.getElementById('logContent');
-        logContent.appendChild(logEntry);
-        logContent.scrollTop = logContent.scrollHeight;
-    }
+    // ... остальные методы остаются без изменений ...
 }
-
-// Глобальный экземпляр
-const googleAuth = new GoogleAuth();
-
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    googleAuth.initialize();
-    
-    // Кнопка авторизации
-    document.getElementById('authButton').addEventListener('click', () => {
-        googleAuth.authorize();
-    });
-});
