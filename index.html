@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KBT Utilities</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Библиотека для сканирования QR (используем html5-qrcode) -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Библиотека для генерации QR (для режима "шк") -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔧 KBT Utilities</h1>
+            <button id="themeToggle" aria-label="Переключить тему">🌙</button>
+        </header>
+
+        <nav class="scanner-mode">
+            <button class="mode-btn active" data-mode="transfer">📦 Сканер передач</button>
+            <button class="mode-btn" data-mode="generic">📷 Сканер шк</button>
+        </nav>
+
+        <main>
+            <!-- Блок для Сканера передач (активен по умолчанию) -->
+            <section id="transfer-scanner" class="scanner-panel active">
+                <div id="transfer-reader"></div>
+                <button id="startTransferScan">🎥 Начать сканирование</button>
+                <button id="stopTransferScan" disabled>⏹ Остановить</button>
+
+                <div class="data-section">
+                    <h3>История передач</h3>
+                    <ul id="transfer-history"></ul>
+                    <button id="exportBtn">📥 Экспорт в CSV</button>
+                </div>
+            </section>
+
+            <!-- Блок для Сканера шк (скрыт по умолчанию) -->
+            <section id="generic-scanner" class="scanner-panel">
+                <div id="generic-reader"></div>
+                <button id="startGenericScan">🎥 Начать сканирование</button>
+                <button id="stopGenericScan" disabled>⏹ Остановить</button>
+
+                <div class="data-section">
+                    <h3>Сохраненные QR-коды</h3>
+                    <div id="qrcode-gallery"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
