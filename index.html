@@ -6,9 +6,9 @@
     <title>KBT Utilities</title>
     <link rel="stylesheet" href="style.css">
     <!-- Библиотека для сканирования QR -->
-    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <!-- Библиотека для генерации QR -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -19,6 +19,7 @@
                 <button id="exportAllBtn" title="Экспорт всех данных">📤 Все</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
                 <button id="importBtn" title="Импорт данных">📥 Импорт</button>
+                <button id="downloadLogBtn" title="Скачать лог" onclick="downloadAppLog()">📋 Лог</button>
             </div>
         </header>
 
@@ -35,7 +36,12 @@
                     <button id="stopTransferScan" disabled>⏹ Остановить</button>
                 </div>
                 
-                <div id="transfer-reader" class="scanner-area"></div>
+                <div id="transfer-reader" class="scanner-area">
+                    <div class="scanner-placeholder">
+                        <div class="scanner-icon">📷</div>
+                        <p>Нажмите "Начать сканирование"</p>
+                    </div>
+                </div>
 
                 <div class="data-section">
                     <div class="section-header">
@@ -56,7 +62,12 @@
                     <button id="stopGenericScan" disabled>⏹ Остановить</button>
                 </div>
                 
-                <div id="generic-reader" class="scanner-area"></div>
+                <div id="generic-reader" class="scanner-area">
+                    <div class="scanner-placeholder">
+                        <div class="scanner-icon">📷</div>
+                        <p>Нажмите "Начать сканирование"</p>
+                    </div>
+                </div>
 
                 <div class="data-section">
                     <div class="section-header">
@@ -68,10 +79,27 @@
             </section>
         </main>
 
+        <div class="debug-panel">
+            <details>
+                <summary>Информация для отладки</summary>
+                <div class="debug-info">
+                    <p>Библиотеки:</p>
+                    <ul>
+                        <li id="libHtml5Qrcode">Html5Qrcode: Загрузка...</li>
+                        <li id="libQRCode">QRCode: Загрузка...</li>
+                    </ul>
+                    <div class="debug-controls">
+                        <button onclick="testScanner()">Тест сканера</button>
+                        <button onclick="clearAllData()">Очистить ВСЕ данные</button>
+                    </div>
+                </div>
+            </details>
+        </div>
+
         <footer class="app-info">
-            <p>KBT Utilities v1.0 | Данные сохраняются в вашем браузере</p>
+            <p>KBT Utilities v1.2 | Данные сохраняются локально в браузере</p>
             <p style="font-size: 0.9rem; opacity: 0.7;">
-                Для переноса данных на другой телефон используйте "Экспорт всех данных" и "Импорт"
+                Для отладки используйте "Скачать лог"
             </p>
         </footer>
     </div>
