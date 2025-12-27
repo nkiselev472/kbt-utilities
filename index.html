@@ -8,7 +8,6 @@
     <title>KBT Utilities</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <!-- Уведомления -->
@@ -23,7 +22,7 @@
                     <i class="fas fa-qrcode"></i>
                     <h1>KBT Utilities</h1>
                 </div>
-                <span class="app-version">v2.0</span>
+                <span class="app-version">v2.1</span>
             </div>
             
             <div class="header-right">
@@ -65,7 +64,7 @@
                 </button>
                 <button class="menu-item danger" id="clearQRCodesBtn">
                     <i class="fas fa-trash"></i>
-                    <span>Очистить QR-коды</span>
+                    <span>Очистить ШК</span>
                 </button>
             </div>
             <div class="menu-section">
@@ -85,8 +84,8 @@
                 <span>Сканер передач</span>
             </button>
             <button class="mode-tab" data-mode="generic">
-                <i class="fas fa-qrcode"></i>
-                <span>Сканер QR</span>
+                <i class="fas fa-barcode"></i>
+                <span>Сканер ШК</span>
             </button>
         </div>
 
@@ -113,9 +112,6 @@
                         <button id="stopTransferScan" class="btn-secondary" disabled>
                             <i class="fas fa-stop"></i>
                             <span>Остановить</span>
-                        </button>
-                        <button id="toggleFlash" class="btn-icon" style="display: none;">
-                            <i class="fas fa-lightbulb"></i>
                         </button>
                     </div>
                 </div>
@@ -160,15 +156,15 @@
                 </div>
             </section>
 
-            <!-- Сканер QR -->
+            <!-- Сканер ШК -->
             <section id="generic-scanner" class="scanner-section">
                 <div class="scanner-container">
                     <div id="generic-reader" class="scanner-viewport">
                         <div class="scanner-overlay">
                             <div class="scanner-frame"></div>
                             <div class="scanner-guide">
-                                <p>Наведите на любой QR-код</p>
-                                <small>Текст будет сохранён с изображением</small>
+                                <p>Наведите на ШК (штрих-код)</p>
+                                <small>Формат: *XXXXXXXXXXXXX</small>
                             </div>
                         </div>
                     </div>
@@ -187,15 +183,11 @@
 
                 <div class="data-panel">
                     <div class="panel-header">
-                        <h3><i class="fas fa-qrcode"></i> Сохранённые QR-коды</h3>
+                        <h3><i class="fas fa-barcode"></i> Сохранённые ШК</h3>
                         <div class="panel-actions">
                             <button class="btn-small" id="filterQR">
                                 <i class="fas fa-filter"></i>
                                 Фильтр
-                            </button>
-                            <button class="btn-small" id="batchDelete" style="display: none;">
-                                <i class="fas fa-trash-alt"></i>
-                                Удалить выбранные
                             </button>
                         </div>
                     </div>
@@ -210,15 +202,15 @@
                             </button>
                         </div>
                         <div class="gallery-stats">
-                            <span id="qrCodesCount">0 кодов</span>
+                            <span id="qrCodesCount">0 ШК</span>
                         </div>
                     </div>
                     
                     <div id="qrcode-gallery" class="gallery grid-view">
                         <div class="empty-state">
-                            <i class="fas fa-qrcode"></i>
-                            <p>Нет сохранённых QR-кодов</p>
-                            <small>Отсканируйте QR-коды в режиме сканера</small>
+                            <i class="fas fa-barcode"></i>
+                            <p>Нет сохранённых ШК</p>
+                            <small>Отсканируйте ШК в режиме сканера</small>
                         </div>
                     </div>
                 </div>
@@ -239,18 +231,18 @@
             </div>
         </footer>
 
-        <!-- Модальные окна -->
+        <!-- Модальное окно деталей ШК -->
         <div id="qrDetailModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>Детали QR-кода</h3>
+                    <h3>Детали ШК</h3>
                     <button class="modal-close">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="qr-preview-large" id="qrDetailPreview"></div>
                     <div class="qr-details">
                         <div class="detail-row">
-                            <label>Текст:</label>
+                            <label>Значение:</label>
                             <textarea id="qrDetailText" readonly></textarea>
                         </div>
                         <div class="detail-row">
@@ -258,14 +250,14 @@
                             <span id="qrDetailDate"></span>
                         </div>
                         <div class="detail-row">
-                            <label>Размер:</label>
+                            <label>Длина:</label>
                             <span id="qrDetailSize"></span>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn-secondary" id="copyQRText">
-                        <i class="fas fa-copy"></i> Копировать текст
+                        <i class="fas fa-copy"></i> Копировать
                     </button>
                     <button class="btn-primary" id="shareQR">
                         <i class="fas fa-share-alt"></i> Поделиться
@@ -273,73 +265,11 @@
                 </div>
             </div>
         </div>
-
-        <div id="settingsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Настройки</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="settings-section">
-                        <h4><i class="fas fa-camera"></i> Настройки сканера</h4>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="settingBeep" checked>
-                                Звук при сканировании
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="settingVibrate" checked>
-                                Вибрация при сканировании
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="settingAutoSave" checked>
-                                Автосохранение
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section">
-                        <h4><i class="fas fa-palette"></i> Внешний вид</h4>
-                        <div class="setting-item">
-                            <label>Размер шрифта:</label>
-                            <select id="settingFontSize">
-                                <option value="small">Мелкий</option>
-                                <option value="medium" selected>Средний</option>
-                                <option value="large">Крупный</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="settings-section">
-                        <h4><i class="fas fa-database"></i> Данные</h4>
-                        <div class="setting-item">
-                            <label>Автоэкспорт каждые:</label>
-                            <select id="settingAutoExport">
-                                <option value="0">Не выполнять</option>
-                                <option value="10">10 записей</option>
-                                <option value="50">50 записей</option>
-                                <option value="100">100 записей</option>
-                            </select>
-                        </div>
-                        <button class="btn-small" id="backupNow">
-                            <i class="fas fa-save"></i> Создать резервную копию сейчас
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Загрузка библиотек -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-    <!-- Совместимость с iOS -->
-    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1"></script>
+    <!-- Убираем библиотеку генерации QR, так как она не используется -->
     
     <script src="script.js"></script>
 </body>
