@@ -971,13 +971,6 @@ class DataManager {
 
 // ===== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Проверяем Service Worker для PWA
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(error => {
-            Logger.add('Ошибка регистрации Service Worker', 'error', { error: error.message });
-        });
-    }
-    
     // Инициализируем UI
     UI.init();
     
