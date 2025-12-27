@@ -1,5 +1,5 @@
 // ===== КОНСТАНТЫ И ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =====
-const APP_VERSION = '2.1';
+const APP_VERSION = '2.2';
 const STORAGE_KEYS = {
     TRANSFERS: 'kbt_v2_transfers',
     QR_CODES: 'kbt_v2_qrcodes',
@@ -43,17 +43,14 @@ class Logger {
         
         state.appLog.unshift(logEntry);
         
-        // Ограничиваем размер лога
         if (state.appLog.length > 1000) {
             state.appLog = state.appLog.slice(0, 500);
         }
         
-        // Сохраняем в localStorage
         try {
             localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(state.appLog.slice(0, 200)));
         } catch (e) {}
         
-        // Выводим в консоль
         const consoleMethod = {
             error: console.error,
             warn: console.warn,
@@ -70,7 +67,6 @@ class Logger {
         
         consoleMethod(`${icon} [${new Date().toLocaleTimeString('ru-RU')}] ${message}`, data || '');
         
-        // Обновляем UI если нужно (только для критических ошибок)
         if (type === 'error' || type === 'warn') {
             if (!state.ignoreErrors || !message.includes('сканирования')) {
                 UI.showNotification(message, type);
@@ -131,7 +127,6 @@ class UI {
     
     static loadState() {
         try {
-            // Загружаем данные
             const transfers = localStorage.getItem(STORAGE_KEYS.TRANSFERS);
             const qrCodes = localStorage.getItem(STORAGE_KEYS.QR_CODES);
             const settings = localStorage.getItem(STORAGE_KEYS.SETTINGS);
@@ -142,7 +137,6 @@ class UI {
             if (settings) state.settings = { ...state.settings, ...JSON.parse(settings) };
             if (logs) state.appLog = JSON.parse(logs);
             
-            // Конвертируем старые данные если нужно
             this.migrateOldData();
             
         } catch (error) {
@@ -161,7 +155,6 @@ class UI {
     }
     
     static migrateOldData() {
-        // Конвертация из старого формата
         if (state.transferData.length > 0 && typeof state.transferData[0] === 'string') {
             state.transferData = state.transferData.map((number, index) => ({
                 id: Date.now() - index,
@@ -176,7 +169,6 @@ class UI {
     }
     
     static setupEventListeners() {
-        // Переключение режимов
         document.querySelectorAll('.mode-tab').forEach(tab => {
             tab.addEventListener('click', () => {
                 const mode = tab.dataset.mode;
@@ -184,37 +176,27 @@ class UI {
             });
         });
         
-        // Кнопки сканера передач
         document.getElementById('startTransferScan').addEventListener('click', () => Scanner.start('transfer'));
         document.getElementById('stopTransferScan').addEventListener('click', () => Scanner.stop());
-        
-        // Кнопки сканера ШК
         document.getElementById('startGenericScan').addEventListener('click', () => Scanner.start('generic'));
         document.getElementById('stopGenericScan').addEventListener('click', () => Scanner.stop());
         
-        // Тема
         document.getElementById('themeToggle').addEventListener('click', this.toggleTheme);
-        
-        // Меню
         document.getElementById('menuToggle').addEventListener('click', this.toggleMenu);
         
-        // Экспорт/Импорт
         document.getElementById('exportAllBtn').addEventListener('click', DataManager.exportAll);
         document.getElementById('exportBtn').addEventListener('click', DataManager.exportCSV);
         document.getElementById('downloadLogBtn').addEventListener('click', Logger.download);
         
-        // Очистка
         document.getElementById('clearTransfersBtn').addEventListener('click', DataManager.clearTransfers);
         document.getElementById('clearQRCodesBtn').addEventListener('click', DataManager.clearQRCodes);
         
-        // Сортировка
         document.getElementById('sortByDate')?.addEventListener('click', () => {
             state.sortOrder = state.sortOrder === 'desc' ? 'asc' : 'desc';
             this.renderTransferHistory();
             this.showNotification(`Сортировка: ${state.sortOrder === 'desc' ? 'по убыванию' : 'по возрастанию'}`, 'info');
         });
         
-        // Закрытие меню при клике вне его
         document.addEventListener('click', (e) => {
             const menu = document.getElementById('dropdownMenu');
             const menuToggle = document.getElementById('menuToggle');
@@ -225,11 +207,9 @@ class UI {
             }
         });
         
-        // Проверка соединения
         window.addEventListener('online', () => this.updateConnectionStatus(true));
         window.addEventListener('offline', () => this.updateConnectionStatus(false));
         
-        // Сохранение при закрытии
         window.addEventListener('beforeunload', () => {
             if (state.isScanning) Scanner.stop();
             this.saveState();
@@ -239,12 +219,10 @@ class UI {
     static switchMode(mode) {
         if (state.currentMode === mode) return;
         
-        // Останавливаем сканер
         if (state.isScanning) {
             Scanner.stop();
         }
         
-        // Обновляем UI
         document.querySelectorAll('.mode-tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.mode === mode);
         });
@@ -270,6 +248,9 @@ class UI {
         
         Logger.add(`Тема изменена: ${newTheme}`, 'info');
         UI.showNotification(`Тема: ${newTheme === 'dark' ? 'Тёмная' : 'Светлая'}`, 'success');
+        
+        // Перерисовываем QR-коды с новой темой
+        UI.renderQRCodesGallery();
     }
     
     static setupTheme() {
@@ -312,7 +293,7 @@ class UI {
         try {
             const total = JSON.stringify(state).length;
             const usedKB = Math.round(total / 1024);
-            const limitKB = 5 * 1024; // 5MB лимит
+            const limitKB = 5 * 1024;
             
             const storageInfo = document.getElementById('storageInfo');
             if (storageInfo) {
@@ -350,7 +331,6 @@ class UI {
         const container = document.getElementById('transfer-history');
         if (!container) return;
         
-        // Сортируем
         const sorted = [...data].sort((a, b) => {
             const dateA = new Date(a.timestamp);
             const dateB = new Date(b.timestamp);
@@ -385,7 +365,6 @@ class UI {
             </div>
         `).join('');
         
-        // Добавляем обработчики
         container.querySelectorAll('.copy-btn').forEach((btn, index) => {
             btn.addEventListener('click', () => {
                 const number = sorted[index].number;
@@ -408,95 +387,80 @@ class UI {
         if (state.qrCodes.length === 0) {
             gallery.innerHTML = `
                 <div class="empty-state">
-                    <i class="fas fa-barcode"></i>
+                    <i class="fas fa-qrcode"></i>
                     <p>Нет сохранённых ШК</p>
-                    <small>Отсканируйте ШК в режиме сканера</small>
+                    <small>Отсканируйте QR-коды в режиме сканера</small>
                 </div>
             `;
             return;
         }
         
-        gallery.innerHTML = state.qrCodes.map(qr => `
-            <div class="qr-card" data-id="${qr.id}">
-                <button class="delete-qr-btn" title="Удалить">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="qr-image">
-                    <canvas class="qr-canvas" width="120" height="120"></canvas>
-                </div>
-                <div class="qr-text">${this.truncateText(qr.text, 20)}</div>
-                <div class="qr-date">${new Date(qr.timestamp).toLocaleDateString('ru-RU')}</div>
-            </div>
-        `).join('');
+        gallery.innerHTML = '';
         
-        // Генерируем штрих-коды для каждого ШК
-        gallery.querySelectorAll('.qr-card').forEach((card, index) => {
-            const id = card.dataset.id;
-            const qr = state.qrCodes.find(q => q.id === id);
-            const canvas = card.querySelector('.qr-canvas');
+        state.qrCodes.forEach(qr => {
+            const card = document.createElement('div');
+            card.className = 'qr-card';
+            card.dataset.id = qr.id;
             
-            if (canvas && qr) {
-                this.generateBarcode(canvas, qr.text);
-            }
+            const canvas = document.createElement('canvas');
+            canvas.className = 'qr-canvas';
+            canvas.width = 120;
+            canvas.height = 120;
             
-            // Обработчики для карточек
+            const textContainer = document.createElement('div');
+            textContainer.className = 'qr-text';
+            textContainer.textContent = this.truncateText(qr.text, 20);
+            textContainer.title = qr.text;
+            
+            const dateContainer = document.createElement('div');
+            dateContainer.className = 'qr-date';
+            dateContainer.textContent = new Date(qr.timestamp).toLocaleDateString('ru-RU');
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-qr-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.title = 'Удалить';
+            
+            // Генерация настоящего QR-кода
+            QRCode.toCanvas(canvas, qr.text, {
+                width: 120,
+                margin: 1,
+                color: {
+                    dark: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000',
+                    light: '#00000000'
+                },
+                errorCorrectionLevel: 'M'
+            }, function(error) {
+                if (error) {
+                    console.error('Ошибка генерации QR-кода:', error);
+                    // Если ошибка, создаем простой QR
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'black';
+                    ctx.font = '12px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('QR', canvas.width/2, canvas.height/2);
+                }
+            });
+            
+            card.appendChild(deleteBtn);
+            card.appendChild(canvas);
+            card.appendChild(textContainer);
+            card.appendChild(dateContainer);
+            
+            // Обработчики событий
             card.addEventListener('click', () => {
                 this.showQRDetail(qr);
             });
             
-            const deleteBtn = card.querySelector('.delete-qr-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                DataManager.deleteQRCode(id);
+                DataManager.deleteQRCode(qr.id);
             });
-        });
-    }
-    
-    static generateBarcode(canvas, text) {
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // Очищаем canvas
-        ctx.clearRect(0, 0, width, height);
-        
-        // Белый фон
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0, 0, width, height);
-        
-        // Чёрные полосы для штрих-кода
-        ctx.fillStyle = 'black';
-        
-        // Генерируем простой штрих-код на основе текста
-        const hash = this.hashString(text);
-        const barCount = 30;
-        const barWidth = width / barCount;
-        
-        for (let i = 0; i < barCount; i++) {
-            // Используем хэш для определения высоты полосы
-            const barHeight = (hash[i % hash.length] % 70) + 30;
-            const shouldDraw = hash[i % hash.length] % 2 === 0;
             
-            if (shouldDraw) {
-                const x = i * barWidth;
-                ctx.fillRect(x, (height - barHeight) / 2, barWidth - 1, barHeight);
-            }
-        }
-        
-        // Добавляем текст под штрих-кодом
-        ctx.fillStyle = 'black';
-        ctx.font = '10px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText(text.substring(0, 12), width / 2, height - 5);
-    }
-    
-    static hashString(str) {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            hash = ((hash << 5) - hash) + str.charCodeAt(i);
-            hash |= 0;
-        }
-        return Math.abs(hash).toString().split('').map(Number);
+            gallery.appendChild(card);
+        });
     }
     
     static truncateText(text, maxLength) {
@@ -504,59 +468,139 @@ class UI {
     }
     
     static showQRDetail(qr) {
-        const modal = document.getElementById('qrDetailModal');
-        if (!modal) return;
+        // Создаем модальное окно
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        `;
         
-        // Заполняем данные
-        document.getElementById('qrDetailText').value = qr.text;
-        document.getElementById('qrDetailDate').textContent = new Date(qr.timestamp).toLocaleString('ru-RU');
-        document.getElementById('qrDetailSize').textContent = `${qr.text.length} символов`;
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        modalContent.style.cssText = `
+            background: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 16px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+        `;
         
-        // Генерируем большой штрих-код
-        const preview = document.getElementById('qrDetailPreview');
-        if (preview) {
-            preview.innerHTML = '';
-            const canvas = document.createElement('canvas');
-            canvas.width = 200;
-            canvas.height = 200;
-            
-            this.generateBarcode(canvas, qr.text);
-            preview.appendChild(canvas);
-        }
+        const title = document.createElement('h3');
+        title.textContent = 'Детали ШК';
+        title.style.marginBottom = '1rem';
         
-        // Обработчики кнопок
-        document.getElementById('copyQRText').onclick = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 200;
+        canvas.height = 200;
+        canvas.style.cssText = `
+            width: 200px;
+            height: 200px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            margin: 0 auto 1rem;
+            display: block;
+        `;
+        
+        const textArea = document.createElement('textarea');
+        textArea.value = qr.text;
+        textArea.readOnly = true;
+        textArea.style.cssText = `
+            width: 100%;
+            min-height: 100px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            resize: vertical;
+            font-family: monospace;
+        `;
+        
+        const dateInfo = document.createElement('p');
+        dateInfo.textContent = `Дата сканирования: ${new Date(qr.timestamp).toLocaleString('ru-RU')}`;
+        dateInfo.style.color = 'var(--text-secondary)';
+        dateInfo.style.marginBottom = '1rem';
+        
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.cssText = `
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        `;
+        
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '📋 Копировать';
+        copyBtn.className = 'btn-secondary';
+        copyBtn.onclick = () => {
             navigator.clipboard.writeText(qr.text);
             UI.showNotification('Текст скопирован', 'success');
         };
         
-        document.getElementById('shareQR').onclick = () => {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'ШК из KBT Utilities',
-                    text: qr.text,
-                    url: window.location.href
-                });
-            } else {
-                navigator.clipboard.writeText(qr.text);
-                UI.showNotification('Текст скопирован в буфер', 'info');
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Закрыть';
+        closeBtn.className = 'btn-primary';
+        closeBtn.onclick = () => document.body.removeChild(modal);
+        
+        // Генерация большого QR-кода
+        QRCode.toCanvas(canvas, qr.text, {
+            width: 200,
+            margin: 2,
+            color: {
+                dark: document.documentElement.getAttribute('data-theme') === 'dark' ? '#ffffff' : '#000000',
+                light: '#00000000'
+            },
+            errorCorrectionLevel: 'M'
+        }, function(error) {
+            if (error) {
+                console.error('Ошибка генерации QR-кода:', error);
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'black';
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('QR', canvas.width/2, canvas.height/2);
             }
-        };
+        });
         
-        // Закрытие модального окна
-        const closeBtn = modal.querySelector('.modal-close');
-        closeBtn.onclick = () => modal.classList.remove('show');
+        // Сборка модального окна
+        buttonContainer.appendChild(copyBtn);
+        buttonContainer.appendChild(closeBtn);
         
-        modal.classList.add('show');
+        modalContent.appendChild(title);
+        modalContent.appendChild(canvas);
+        modalContent.appendChild(dateInfo);
+        modalContent.appendChild(textArea);
+        modalContent.appendChild(buttonContainer);
+        modal.appendChild(modalContent);
         
         // Закрытие по клику вне окна
         modal.onclick = (e) => {
-            if (e.target === modal) modal.classList.remove('show');
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
         };
+        
+        document.body.appendChild(modal);
     }
     
     static showNotification(message, type = 'info', duration = 3000) {
-        // Ограничиваем частоту уведомлений
         const now = Date.now();
         if (now - state.lastNotificationTime < 2000 && type !== 'error') {
             return;
@@ -580,7 +624,6 @@ class UI {
             document.body.appendChild(container);
         }
         
-        // Ограничиваем количество уведомлений
         if (container.children.length >= 3) {
             container.firstChild?.remove();
         }
@@ -605,7 +648,6 @@ class UI {
         
         container.appendChild(notification);
         
-        // Автоудаление
         const autoRemove = setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.animation = 'slideInRight 0.3s ease reverse';
@@ -613,7 +655,6 @@ class UI {
             }
         }, duration);
         
-        // Закрытие по кнопке
         notification.querySelector('.notification-close').addEventListener('click', () => {
             clearTimeout(autoRemove);
             notification.style.animation = 'slideInRight 0.3s ease reverse';
@@ -631,6 +672,12 @@ class UI {
         if (typeof Html5Qrcode === 'undefined') {
             Logger.add('Библиотека сканера не загружена', 'error');
             UI.showNotification('Ошибка загрузки сканера', 'error');
+            return false;
+        }
+        
+        if (typeof QRCode === 'undefined') {
+            Logger.add('Библиотека генерации QR-кодов не загружена', 'error');
+            UI.showNotification('Ошибка загрузки генератора QR', 'error');
             return false;
         }
         
@@ -665,7 +712,6 @@ class Scanner {
                 aspectRatio: 1.0
             };
             
-            // Временно игнорируем ошибки при запуске
             state.ignoreErrors = true;
             
             state.activeScanner.start(
@@ -678,7 +724,6 @@ class Scanner {
                 if (startBtn) startBtn.disabled = true;
                 if (stopBtn) stopBtn.disabled = false;
                 
-                // Через 2 секунды выключаем игнорирование ошибок
                 setTimeout(() => {
                     state.ignoreErrors = false;
                 }, 2000);
@@ -721,7 +766,6 @@ class Scanner {
             state.isScanning = false;
             state.activeScanner = null;
             
-            // Обновляем кнопки
             const startTransferBtn = document.getElementById('startTransferScan');
             const stopTransferBtn = document.getElementById('stopTransferScan');
             const startGenericBtn = document.getElementById('startGenericScan');
@@ -745,7 +789,6 @@ class Scanner {
     static onScanSuccess(decodedText, mode) {
         Logger.add(`Отсканировано (${mode})`, 'info', { text: decodedText });
         
-        // Звуковой сигнал
         if (state.settings.beep) {
             this.playBeep();
         }
@@ -753,17 +796,15 @@ class Scanner {
         if (mode === 'transfer') {
             this.processTransfer(decodedText);
         } else {
-            this.processShk(decodedText);
+            this.processGenericQR(decodedText);
         }
         
-        // Вибрация
         if (state.settings.vibrate && navigator.vibrate) {
             navigator.vibrate([100, 50, 100]);
         }
     }
     
     static onScanError(errorMessage) {
-        // Игнорируем нормальные ошибки сканирования
         const isNormalError = 
             errorMessage.includes('NotFoundException') || 
             errorMessage.includes('No QR code') ||
@@ -789,7 +830,6 @@ class Scanner {
         
         const number = match[1];
         
-        // Проверяем дубликаты
         if (state.transferData.some(item => item.number === number)) {
             UI.showNotification(`Номер ${number} уже отсканирован`, 'warning');
             return;
@@ -810,41 +850,39 @@ class Scanner {
         UI.showNotification(`Добавлено: ${number}`, 'success');
         Logger.add('Передача сохранена', 'success', { number });
         
-        // Проверяем автоэкспорт
         if (state.settings.autoExport !== '0' && 
             state.transferData.length % parseInt(state.settings.autoExport) === 0) {
             DataManager.exportCSV();
         }
     }
     
-    static processShk(text) {
-        // Проверяем что ШК начинается с *
-        if (!text.startsWith('*')) {
-            UI.showNotification('Неверный формат ШК. Должен начинаться с *', 'warning');
-            Logger.add('Неверный формат ШК', 'warn', { received: text });
-            return;
-        }
+    static processGenericQR(text) {
+        // Проверка что ШК начинается с * (если требуется)
+        // if (!text.startsWith('*')) {
+        //     UI.showNotification('ШК должен начинаться с *', 'warning');
+        //     Logger.add('Неверный формат ШК', 'warn', { received: text });
+        //     return;
+        // }
         
-        // Проверяем дубликаты
         if (state.qrCodes.some(item => item.text === text)) {
             UI.showNotification('Этот ШК уже сохранён', 'warning');
             return;
         }
         
-        const shk = {
+        const qr = {
             id: Date.now() + Math.random().toString(36).substr(2, 9),
             text: text,
             timestamp: new Date().toISOString(),
             dateDisplay: new Date().toLocaleString('ru-RU')
         };
         
-        state.qrCodes.unshift(shk);
+        state.qrCodes.unshift(qr);
         UI.saveState();
         UI.renderQRCodesGallery();
         UI.updateStats();
         
         UI.showNotification('ШК сохранён', 'success');
-        Logger.add('ШК сохранён', 'success', { id: shk.id });
+        Logger.add('ШК сохранён', 'success', { id: qr.id });
     }
     
     static playBeep() {
@@ -998,20 +1036,16 @@ class DataManager {
 
 // ===== ИНИЦИАЛИЗАЦИЯ ПРИЛОЖЕНИЯ =====
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализируем UI
     UI.init();
     
-    // Рендерим начальные данные
     UI.renderTransferHistory();
     UI.renderQRCodesGallery();
     
-    // Обновляем статус соединения
     UI.updateConnectionStatus(navigator.onLine);
     
     Logger.add(`Приложение KBT Utilities ${APP_VERSION} запущено`, 'success');
 });
 
-// ===== ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ HTML =====
 window.downloadAppLog = Logger.download;
 
 // Экспортируем для отладки
