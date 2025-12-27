@@ -290,4 +290,60 @@ button:disabled {
     #qrcode-gallery {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     }
+
+}
+/* Добавь в конец style.css */
+.qr-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border: 2px solid var(--border-color);
+}
+
+.qr-text {
+    padding: 0.5rem;
+}
+
+.qr-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    word-break: break-word;
+}
+
+.qr-date {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.transfer-number {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+}
+
+.transfer-time {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Улучшения для мобильных устройств */
+@media (max-width: 480px) {
+    .scanner-mode {
+        flex-direction: column;
+    }
+    
+    #transfer-reader, #generic-reader {
+        height: 250px;
+    }
+    
+    #qrcode-gallery {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+    
+    .qr-card {
+        padding: 0.5rem;
+    }
 }
