@@ -1,5 +1,5 @@
 :root {
-    /* Светлая тема (по умолчанию) */
+    /* Светлая тема */
     --bg-primary: #f5f5f5;
     --bg-secondary: #ffffff;
     --text-primary: #213547;
@@ -33,44 +33,71 @@ body {
     line-height: 1.5;
     min-height: 100vh;
     transition: background-color 0.3s, color 0.3s;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .container {
     max-width: 800px;
     margin: 0 auto;
     padding: 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-/* Шапка и переключатель тем */
+/* Шапка */
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--accent-color);
 }
 
-#themeToggle {
-    background: none;
+.header-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Кнопки темы и экспорта в шапке */
+#themeToggle,
+#exportAllBtn,
+#importBtn {
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 50%;
+    border-radius: 8px;
     width: 2.8rem;
     height: 2.8rem;
-    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: transform 0.2s;
+    font-size: 1.2rem;
+    transition: all 0.2s;
 }
 
-#themeToggle:hover {
+#themeToggle:hover,
+#exportAllBtn:hover,
+#importBtn:hover {
     transform: scale(1.05);
+    background: var(--accent-color);
+    color: white;
 }
 
-/* Переключение между режимами сканера */
+/* Переключение режимов */
 .scanner-mode {
     display: flex;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     background: var(--bg-secondary);
     padding: 0.5rem;
     border-radius: 12px;
@@ -79,7 +106,7 @@ header {
 
 .mode-btn {
     flex: 1;
-    padding: 0.8rem;
+    padding: 1rem;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -87,11 +114,17 @@ header {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .mode-btn.active {
     background: var(--accent-color);
     color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Панели сканеров */
@@ -99,15 +132,21 @@ header {
     display: none;
     flex-direction: column;
     gap: 1.5rem;
+    flex: 1;
 }
 
 .scanner-panel.active {
     display: flex;
 }
 
-/* Контейнеры для сканера (библиотека html5-qrcode их наполнит) */
-#transfer-reader,
-#generic-reader {
+/* Управление сканером */
+.scanner-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.scanner-area {
     width: 100%;
     height: 300px;
     background: var(--bg-secondary);
@@ -117,33 +156,40 @@ header {
     border: 2px dashed var(--border-color);
 }
 
-/* Кнопки управления сканером */
+/* Кнопки */
 button {
-    padding: 0.9rem 1.5rem;
+    padding: 0.8rem 1.2rem;
     border: none;
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--accent-color);
     color: white;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition: all 0.2s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    min-height: 44px; /* Для тач-устройств */
 }
 
 button:hover {
     opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
 }
 
 button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none !important;
 }
 
-/* Секции с историей данных */
+/* Секции данных */
 .data-section {
     background: var(--bg-secondary);
     padding: 1.5rem;
@@ -152,163 +198,138 @@ button:disabled {
     margin-top: 1rem;
 }
 
-#transfer-history {
-    list-style: none;
-    margin: 1rem 0;
-    max-height: 200px;
-    overflow-y: auto;
-}
-
-#transfer-history li {
-    padding: 0.8rem;
-    border-bottom: 1px solid var(--border-color);
+.section-header {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
 }
 
-/* Галерея QR-кодов во втором режиме */
-#qrcode-gallery {
+.section-header h3 {
+    font-size: 1.2rem;
+}
+
+.section-controls {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Список данных */
+.data-list {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+/* Таблица передач */
+.transfers-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.transfers-table th {
+    background: var(--bg-primary);
+    padding: 0.8rem;
+    text-align: left;
+    border-bottom: 2px solid var(--accent-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.transfers-table td {
+    padding: 0.8rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.transfers-table tr:hover {
+    background: var(--bg-primary);
+}
+
+.transfer-number-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.transfer-date-cell {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.transfer-actions-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.copy-transfer-btn,
+.delete-transfer-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.copy-transfer-btn:hover {
+    background: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.delete-transfer-btn:hover {
+    background: #f44336;
+    color: white;
+    border-color: #f44336;
+}
+
+/* Галерея QR-кодов */
+.gallery {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1.5rem;
     margin-top: 1rem;
 }
 
 .qr-card {
     background: var(--bg-primary);
-    border-radius: 10px;
-    padding: 0.8rem;
+    border-radius: 12px;
+    padding: 1rem;
     text-align: center;
     box-shadow: var(--shadow);
     position: relative;
-}
-
-.qr-card img {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-}
-
-.delete-qr-btn {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ff4444;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 26px;
-    height: 26px;
-    font-size: 0.9rem;
     cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid var(--border-color);
 }
 
-/* Уведомления */
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 12px 20px;
-    border-radius: 8px;
-    color: white;
-    font-weight: bold;
-    z-index: 1001;
-    animation: slideIn 0.3s ease;
-    max-width: 300px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.qr-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-.notification.success {
-    background: #4CAF50;
-}
-
-.notification.error {
-    background: #f44336;
-}
-
-.notification.warning {
-    background: #ff9800;
-}
-
-.notification.info {
-    background: #2196F3;
-}
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-@keyframes slideOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(100%); opacity: 0; }
-}
-
-/* QR текст в карточках */
-.qr-text {
-    margin-top: 8px;
-    font-size: 0.85rem;
-    word-break: break-all;
-}
-
-.qr-text p {
-    margin: 4px 0;
-    color: var(--text-primary);
-}
-
-/* Стили для истории передач */
-#transfer-history li {
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-#transfer-history li:hover {
-    background-color: var(--bg-primary);
-}
-
-#transfer-history .number {
-    font-family: monospace;
-    font-size: 1.1rem;
-}
-
-#transfer-history .time {
-    font-size: 0.85rem;
-    color: var(--text-secondary);
-}
-
-/* Адаптивность для очень маленьких экранов */
-@media (max-width: 480px) {
-    .scanner-mode {
-        flex-direction: column;
-    }
-    
-    #transfer-reader,
-    #generic-reader {
-        height: 250px;
-    }
-    
-    #qrcode-gallery {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    }
-
-}
-/* Добавь в конец style.css */
 .qr-image {
     width: 100%;
     height: auto;
     border-radius: 8px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
     border: 2px solid var(--border-color);
 }
 
 .qr-text {
-    padding: 0.5rem;
+    padding: 0.5rem 0;
 }
 
 .qr-text p {
     margin: 0;
     font-size: 0.85rem;
     word-break: break-word;
+    color: var(--text-primary);
 }
 
 .qr-date {
@@ -318,32 +339,171 @@ button:disabled {
     color: var(--text-secondary);
 }
 
-.transfer-number {
-    font-family: 'Courier New', monospace;
-    font-weight: bold;
+.delete-qr-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
 }
 
-.transfer-time {
-    font-size: 0.85rem;
+.delete-qr-btn:hover {
+    background: #d32f2f;
+    transform: scale(1.1);
+}
+
+/* Футер */
+.app-info {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
     color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
-/* Улучшения для мобильных устройств */
-@media (max-width: 480px) {
+/* Модальное окно */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 16px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    animation: slideUp 0.3s;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .container {
+        padding: 0.8rem;
+    }
+    
+    header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .header-controls {
+        justify-content: center;
+    }
+    
     .scanner-mode {
         flex-direction: column;
     }
     
-    #transfer-reader, #generic-reader {
+    .scanner-area {
         height: 250px;
     }
     
-    #qrcode-gallery {
+    .scanner-controls {
+        flex-direction: column;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .section-controls {
+        justify-content: center;
+    }
+    
+    .gallery {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+    }
+    
+    .transfers-table {
+        font-size: 0.9rem;
+    }
+    
+    .transfers-table th,
+    .transfers-table td {
+        padding: 0.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .scanner-area {
+        height: 200px;
+    }
+    
+    .gallery {
         grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 0.75rem;
+        gap: 0.8rem;
     }
     
     .qr-card {
-        padding: 0.5rem;
+        padding: 0.8rem;
     }
+    
+    button {
+        padding: 0.7rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Скроллбар */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
 }
