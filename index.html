@@ -22,7 +22,7 @@
                     <i class="fas fa-qrcode"></i>
                     <h1>KBT Utilities</h1>
                 </div>
-                <span class="app-version">v2.1</span>
+                <span class="app-version">v2.2</span>
             </div>
             
             <div class="header-right">
@@ -46,10 +46,6 @@
                 <button class="menu-item" id="exportAllBtn">
                     <i class="fas fa-file-export"></i>
                     <span>Экспорт всех данных</span>
-                </button>
-                <button class="menu-item" id="importBtn">
-                    <i class="fas fa-file-import"></i>
-                    <span>Импорт данных</span>
                 </button>
                 <button class="menu-item" id="downloadLogBtn">
                     <i class="fas fa-bug"></i>
@@ -84,7 +80,7 @@
                 <span>Сканер передач</span>
             </button>
             <button class="mode-tab" data-mode="generic">
-                <i class="fas fa-barcode"></i>
+                <i class="fas fa-qrcode"></i>
                 <span>Сканер ШК</span>
             </button>
         </div>
@@ -131,14 +127,6 @@
                         </div>
                     </div>
                     
-                    <div class="search-box">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="searchTransfers" placeholder="Поиск по номеру...">
-                        <button id="clearSearch" class="btn-clear">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    
                     <div class="data-list-container">
                         <div id="transfer-history" class="data-list">
                             <div class="empty-state">
@@ -163,8 +151,8 @@
                         <div class="scanner-overlay">
                             <div class="scanner-frame"></div>
                             <div class="scanner-guide">
-                                <p>Наведите на ШК (штрих-код)</p>
-                                <small>Формат: *XXXXXXXXXXXXX</small>
+                                <p>Наведите на любой QR-код</p>
+                                <small>Будет сохранён и сгенерирован QR</small>
                             </div>
                         </div>
                     </div>
@@ -183,7 +171,7 @@
 
                 <div class="data-panel">
                     <div class="panel-header">
-                        <h3><i class="fas fa-barcode"></i> Сохранённые ШК</h3>
+                        <h3><i class="fas fa-qrcode"></i> Сохранённые ШК</h3>
                         <div class="panel-actions">
                             <button class="btn-small" id="filterQR">
                                 <i class="fas fa-filter"></i>
@@ -208,9 +196,9 @@
                     
                     <div id="qrcode-gallery" class="gallery grid-view">
                         <div class="empty-state">
-                            <i class="fas fa-barcode"></i>
+                            <i class="fas fa-qrcode"></i>
                             <p>Нет сохранённых ШК</p>
-                            <small>Отсканируйте ШК в режиме сканера</small>
+                            <small>Отсканируйте QR-коды в режиме сканера</small>
                         </div>
                     </div>
                 </div>
@@ -230,46 +218,12 @@
                 </p>
             </div>
         </footer>
-
-        <!-- Модальное окно деталей ШК -->
-        <div id="qrDetailModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Детали ШК</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="qr-preview-large" id="qrDetailPreview"></div>
-                    <div class="qr-details">
-                        <div class="detail-row">
-                            <label>Значение:</label>
-                            <textarea id="qrDetailText" readonly></textarea>
-                        </div>
-                        <div class="detail-row">
-                            <label>Дата сканирования:</label>
-                            <span id="qrDetailDate"></span>
-                        </div>
-                        <div class="detail-row">
-                            <label>Длина:</label>
-                            <span id="qrDetailSize"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" id="copyQRText">
-                        <i class="fas fa-copy"></i> Копировать
-                    </button>
-                    <button class="btn-primary" id="shareQR">
-                        <i class="fas fa-share-alt"></i> Поделиться
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Загрузка библиотек -->
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-    <!-- Убираем библиотеку генерации QR, так как она не используется -->
+    <!-- Библиотека для генерации QR-кодов -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     
     <script src="script.js"></script>
 </body>
