@@ -5,16 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KBT Utilities</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Библиотека для сканирования QR (используем html5-qrcode) -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <!-- Библиотека для генерации QR (для режима "шк") -->
+    <!-- Библиотека для сканирования QR -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <!-- Библиотека для генерации QR -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>🔧 KBT Utilities</h1>
-            <button id="themeToggle" aria-label="Переключить тему">🌙</button>
+            <div class="header-controls">
+                <button id="themeToggle" aria-label="Переключить тему">🌙</button>
+                <button id="exportAllBtn" title="Экспорт всех данных">📤 Все</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button id="importBtn" title="Импорт данных">📥 Импорт</button>
+            </div>
         </header>
 
         <nav class="scanner-mode">
@@ -23,36 +28,54 @@
         </nav>
 
         <main>
-            <!-- Блок для Сканера передач (активен по умолчанию) -->
+            <!-- Блок для Сканера передач -->
             <section id="transfer-scanner" class="scanner-panel active">
-                <div id="transfer-reader"></div>
-                <button id="startTransferScan">🎥 Начать сканирование</button>
-                <button id="stopTransferScan" disabled>⏹ Остановить</button>
+                <div class="scanner-controls">
+                    <button id="startTransferScan">🎥 Начать сканирование</button>
+                    <button id="stopTransferScan" disabled>⏹ Остановить</button>
+                </div>
+                
+                <div id="transfer-reader" class="scanner-area"></div>
 
                 <div class="data-section">
-                    <h3>История передач</h3>
-                    <ul id="transfer-history"></ul>
-                    <button id="exportBtn">📥 Экспорт в CSV</button>
-                    <button id="clearTransfersBtn" style="background: #f44336; margin-left: 10px;">🗑 Очистить</button>
+                    <div class="section-header">
+                        <h3>История передач</h3>
+                        <div class="section-controls">
+                            <button id="exportBtn" title="Экспорт в CSV">📥 CSV</button>
+                            <button id="clearTransfersBtn" title="Очистить все" style="background: #f44336;">🗑 Очистить</button>
+                        </div>
+                    </div>
+                    <div id="transfer-history" class="data-list"></div>
                 </div>
             </section>
 
-            <!-- Блок для Сканера шк (скрыт по умолчанию) -->
+            <!-- Блок для Сканера шк -->
             <section id="generic-scanner" class="scanner-panel">
-                <div id="generic-reader"></div>
-                <button id="startGenericScan">🎥 Начать сканирование</button>
-                <button id="stopGenericScan" disabled>⏹ Остановить</button>
+                <div class="scanner-controls">
+                    <button id="startGenericScan">🎥 Начать сканирование</button>
+                    <button id="stopGenericScan" disabled>⏹ Остановить</button>
+                </div>
+                
+                <div id="generic-reader" class="scanner-area"></div>
 
                 <div class="data-section">
-                    <h3>Сохраненные QR-коды</h3>
-                    <div id="qrcode-gallery"></div>
+                    <div class="section-header">
+                        <h3>Сохраненные QR-коды</h3>
+                        <button id="clearQRCodesBtn" title="Очистить все" style="background: #f44336;">🗑 Очистить все</button>
+                    </div>
+                    <div id="qrcode-gallery" class="gallery"></div>
                 </div>
-                <button id="clearQRCodesBtn" style="background: #f44336; margin-bottom: 1rem;">🗑 Очистить все QR</button>
             </section>
         </main>
+
+        <footer class="app-info">
+            <p>KBT Utilities v1.0 | Данные сохраняются в вашем браузере</p>
+            <p style="font-size: 0.9rem; opacity: 0.7;">
+                Для переноса данных на другой телефон используйте "Экспорт всех данных" и "Импорт"
+            </p>
+        </footer>
     </div>
 
     <script src="script.js"></script>
 </body>
-
 </html>
